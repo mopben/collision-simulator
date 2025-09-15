@@ -1,27 +1,39 @@
 const socket = new WebSocket("ws://localhost:8765");
-
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
+const collisionSound = new Audio("audio/collision.mp3");
 
+const soundPool = [];
+const POOL_SIZE = 500;
+for (let i = 0; i < POOL_SIZE; i ++) {
+  soundPool.push(collisionSound);
+}
 
-console.log("js started");
-socket.onmessage = function(event) {
-  const state = JSON.parse(event.data);
-  console.log("json state reached.");
-  drawBlocks(state.blocks); // your canvas rendering function
-};
+let current = 0;
+function playCollisionSound() {
+    const sound = soundPool[current];
+    sound.currentTime = 0;
+    sound.play();
+    current = (current + 1) % POOL_SIZE;
+}
 
 function drawBlocks(blocks) {
-  // clear the canvas each frame
-  
-  //ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // draw each block
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   for (const b of blocks) {
     console.log("Drawing")
-    ctx.fillStyle = "blue"; // block color
-    ctx.fillRect(b.x, b.y, 50, 50); // (x, y, width, height)
+    ctx.fillStyle = "blue"; 
+    ctx.fillRect(b.x, b.y, 50, 50); 
   }
 }
+
+console.log("js started");
+socket.onmessage = function(event) {
+  const state = JSON.parse(event.data);
+  drawBlocks(state.blocks);
+  
+  if (state.collisionOccured) {
+      playCollisionSound();
+  }
+};

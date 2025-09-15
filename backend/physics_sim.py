@@ -1,5 +1,7 @@
 from block import Block
+from constants import Constants
 import asyncio
+import time
 import websockets
 import json
 import time
@@ -17,20 +19,46 @@ start_time = time.time()
 '''
 # Minimum viable product: Only left & right (1d), able to enter in x, y, mass, forces of each box
 
+async def physics(websocket): # type: ignore
+    blocks = [Block(100, 300, 1000), Block(300, 300, 1)]
 
-async def physics(websocket):
-    fps = 30
-    blocks = [Block(500, 500, -300, 300, 2)]
+    blocks[0].apply_force(100000, 0)
+    blocks[1].apply_force(100, 0)
 
-    while True:
-        for b in blocks:
-            b.step(1 / 30) # Simulates each block separately
+    collisions = 0
 
-        state = {"blocks": [{"x": b.x, "y": b.y} for b in blocks]} # creates a dict of the position of each blocks (which themselves are dicts)
-        await websocket.send(json.dumps(state)) # only pauses THIS COROUTINE (physics function) until the data is sent; everything else continues
-        # json.dumps converts something into a json string
-        await asyncio.sleep(1 / fps) # Happens after data is sent, only pauses THIS COROUTINE for 1/fps seconds
-        # async functions can only run together with other async functions, if ran together with a sync function then the sync function will block everything
+    while True: # Each loop is one frame
+        start_time = time.time()
+
+        collision_occured = False
+
+        for i, b in enumerate(blocks):
+            substeps = min(10000, max(1, int(max(b.v_x, b.v_y)))) # Scale frames simulated based on block speed to prevent clipping
+            dt_sub = Constants.dt / substeps
+
+            for _ in range(substeps):
+                b.step(dt_sub) 
+            
+                if b.will_touch_wall(Constants.dt): # May need to deal with problem when block collides with wall and another block simultaneously
+                    blocks[i].collide_with_wall()
+                    collision_occured = True
+                    
+                for j in range(i + 1, len(blocks)):
+                    if  b.will_collide(blocks[j], Constants.dt):
+                        b.collide_with_block(blocks[j])
+                        collision_occured = True
+
+        if collision_occured:
+            collisions += 1
+
+        state = {
+            "blocks": [{"x": b.x, "y": b.y} for b in blocks],
+            "collisionOccured": collision_occured,
+            "totalCollisions": collisions
+            } 
+        
+        await websocket.send(json.dumps(state)) 
+        await asyncio.sleep(Constants.dt - (time.time() - start_time))
 
 async def main():
     async with websockets.serve(physics, "localhost", 8765): # sets up 
