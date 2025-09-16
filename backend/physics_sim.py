@@ -20,10 +20,10 @@ start_time = time.time()
 # Minimum viable product: Only left & right (1d), able to enter in x, y, mass, forces of each box
 
 async def physics(websocket): # type: ignore
-    blocks = [Block(100, 300, 1000), Block(300, 300, 1)]
+    blocks = [Block(100, 300, 5000, "blue"), Block(300, 300, 5, "red")]
 
-    blocks[0].apply_force(100000, 0)
-    blocks[1].apply_force(100, 0)
+    blocks[0].apply_force(500000, 0)
+    blocks[1].apply_force(500, 0)
 
     collisions = 0
 
@@ -33,7 +33,7 @@ async def physics(websocket): # type: ignore
         collision_occured = False
 
         for i, b in enumerate(blocks):
-            substeps = min(10000, max(1, int(max(b.v_x, b.v_y)))) # Scale frames simulated based on block speed to prevent clipping
+            substeps = min(10000, max(1, int(max(b.v_x, b.v_y) / 100) ** 2)) # Scale frames simulated based on block speed to prevent clipping
             dt_sub = Constants.dt / substeps
 
             for _ in range(substeps):
@@ -52,9 +52,9 @@ async def physics(websocket): # type: ignore
             collisions += 1
 
         state = {
-            "blocks": [{"x": b.x, "y": b.y} for b in blocks],
+            "blocks": [{"x": b.x, "y": b.y, "color": b.color, "v_x": b.v_x, "isColliding": b.is_colliding} for b in blocks],
             "collisionOccured": collision_occured,
-            "totalCollisions": collisions
+            "totalCollisions": collisions   
             } 
         
         await websocket.send(json.dumps(state)) 

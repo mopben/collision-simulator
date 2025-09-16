@@ -1,9 +1,28 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <title>Collision Simulator</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+    </style>
+
+  </head>
   <body>
     <canvas id="myCanvas" width="600" height="600" style="border:1px solid black;"></canvas>
 
     <script src="physics.js"></script>
+    
+    <div id="collision-counter" style="font-size:20px; margin:10px; color:black;">
+      Collisions: 0
+    </div>
 
   </body>
 </html>

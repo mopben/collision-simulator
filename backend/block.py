@@ -1,13 +1,15 @@
 from constants import Constants
 
 class Block:
-    def __init__(self, x: float, y: float, m: float): # m is in kg
+    def __init__(self, x: float, y: float, m: float, color: str): # m is in kg
         self.x = x
         self.y = y
         self.m = m
-        self.v_x = 0.0
-        self.v_y = 0.0
         self.size = Constants.SIZE
+        self.color = color
+        self.v_x: float = 0.0
+        self.v_y: float = 0.0
+        self.is_colliding: bool = False
         print("Block Initialized")
         
     def apply_force(self, f_x: float, f_y: float): # Applies an impulse equivalent to Force *  1s / mass
@@ -35,6 +37,7 @@ class Block:
         if ny1 + self.size < ny2 or ny1 > ny2 + other.size:
             return False
 
+        is_colliding = True
         return True
     
     def will_touch_wall(self, dt) -> bool:
@@ -56,6 +59,7 @@ class Block:
         new_v_x2 = (other.v_x * (other.m - self.m) + 2 * self.m * self.v_x) / (self.m + other.m)
         new_v_y2 = (other.v_y * (other.m - self.m) + 2 * self.m * self.v_y) / (self.m + other.m)
         
+        print("v_x1: ", self.v_x, "x:" , self.x, "       v_x2: ", other.v_x, "x_2:", other.x)
         self.v_x = new_v_x1
         self.v_y = new_v_y1
         other.v_x = new_v_x2

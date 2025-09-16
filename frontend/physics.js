@@ -17,13 +17,14 @@ function playCollisionSound() {
     current = (current + 1) % POOL_SIZE;
 }
 
+
 function drawBlocks(blocks) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   for (const b of blocks) {
     console.log("Drawing")
-    ctx.fillStyle = "blue"; 
+    ctx.fillStyle = b.color;
     ctx.fillRect(b.x, b.y, 50, 50); 
   }
 }
@@ -35,5 +36,9 @@ socket.onmessage = function(event) {
   
   if (state.collisionOccured) {
       playCollisionSound();
+      
+      const counterElement = document.getElementById("collision-counter");
+      counterElement.textContent = "Collision counter: " + state.totalCollisions;
+
   }
 };
