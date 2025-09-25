@@ -25,7 +25,7 @@ function drawBlocks(blocks) {
   for (const b of blocks) {
     console.log("Drawing")
     ctx.fillStyle = b.color;
-    ctx.fillRect(b.x, b.y, 50, 50); 
+    ctx.fillRect(b.x, b.y, b.x2 - b.x, b.y2 - b.y); 
   }
 }
 

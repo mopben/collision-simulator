@@ -1,15 +1,19 @@
 from constants import Constants
 
-class Square:
-    def __init__(self, x: float, y: float, m: float, color: str): # m is in kg
+class Rectangle():
+    def __init__(self, x: float, y: float, x2: float, y2: float, m: float, color: str): # m is in kg
         self.x = x
         self.y = y
+        self.x2 = x2
+        self.y2 = y2
         self.m = m
-        self.size = Constants.SIZE
         self.color = color
         self.v_x: float = 0.0
         self.v_y: float = 0.0
         self.is_colliding: bool = False
+        self.size = Constants.SIZE
+        self.color = color
+
         print("Block Initialized")
         
     def apply_force(self, f_x: float, f_y: float): # Applies an impulse equivalent to Force *  1s / mass
@@ -20,17 +24,10 @@ class Square:
         self.x += self.v_x * dt
         self.y += self.v_y * dt
 
-
     def calculate_collision_time(self, other, dt: float) -> float | None:
         # Relative motion
         vx_rel = self.v_x - other.v_x
         vy_rel = self.v_y - other.v_y
-
-        # Start and end positions (intervals)
-        x1_min, x1_max = self.x, self.x + self.size
-        x2_min, x2_max = other.x, other.x + other.size
-        y1_min, y1_max = self.y, self.y + self.size
-        y2_min, y2_max = other.y, other.y + other.size
 
         def axis_times(min1, max1, min2, max2, v_rel):
             if v_rel == 0: # Moving the same speed
@@ -45,8 +42,8 @@ class Square:
             return t_enter, t_exit
 
 
-        t_x_enter, t_x_exit = axis_times(x1_min, x1_max, x2_min, x2_max, vx_rel)
-        t_y_enter, t_y_exit = axis_times(y1_min, y1_max, y2_min, y2_max, vy_rel)
+        t_x_enter, t_x_exit = axis_times(self.x, self.x2, other.x, other.x2, vx_rel)
+        t_y_enter, t_y_exit = axis_times(self.y, self.y2, other.y, other.y2, vy_rel)
 
         # Overall collision interval = intersection of x and y intervals
         t_enter = max(t_x_enter, t_y_enter)
@@ -78,11 +75,11 @@ class Square:
         return None
     
     def collide_with_block(self, other):
-
         self.v_x = (self.v_x * (self.m - other.m) + 2 * other.m * other.v_x) / (self.m + other.m)
         self.v_y = (self.v_y * (self.m - other.m) + 2 * other.m * other.v_y) / (self.m + other.m)
         other.v_x = (other.v_x * (other.m - self.m) + 2 * self.m * self.v_x) / (self.m + other.m)
         other.v_y = (other.v_y * (other.m - self.m) + 2 * self.m * self.v_y) / (self.m + other.m)      
+        print(self.v_x)
 
     def collide_with_wall(self):
         self.v_x = -self.v_x

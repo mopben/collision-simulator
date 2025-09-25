@@ -1,4 +1,4 @@
-from square.py import Square
+from rectangle import Rectangle
 from constants import Constants
 import asyncio
 import time
@@ -31,7 +31,7 @@ from typing import List, Tuple
 EPS = 1e-9
 MAX_ITER = 50  # safety cap to avoid pathological infinite loops
 
-async def simulate_collisions(blocks: List[Square], dt: float):
+async def simulate_collisions(blocks: List[Rectangle], dt: float):
     """
     Processes collisions for the whole frame of duration dt.
     Returns (collision_counts, any_collision_happened_bool).
@@ -117,14 +117,22 @@ async def simulate_collisions(blocks: List[Square], dt: float):
     return total_collisions, any_collision
 
                     
-async def physics(websocket): # type: ignore
-    blocks = [Square(300, 300, 5000, "blue"), Square(400, 300, 5, "red")]
+async def simulate(websocket): # type: ignore
+    blocks = [Rectangle(300, 300, 350, 350, 5000, "blue"), Rectangle(400, 300, 450, 350, 5, "red"), 
+              Rectangle(0, 0, 600, 10, 10, "black"), # top
+             Rectangle(0, 600, 600, 590, float('inf'), "black"), # bottom
+             Rectangle(0, 0, 10, 600, float('inf'), "black"), # left    
+             Rectangle(600, 0, 590, 600, float('inf'), "black")] # right
 
     blocks[0].apply_force(500000, 0)
     blocks[1].apply_force(500, 0)
 
+    
+
+
     total_collisions = 0
     while True: # Each loop is one frame
+        '''
         collisions = 0
         collision_occured = False
         start_time = time.time()
@@ -132,10 +140,12 @@ async def physics(websocket): # type: ignore
         total_collisions += collisions
         # for i, b in enumerate(blocks):
         #     b.step(Constants.dt - collision_times[i]) 
+        '''
 
+        collision_occured = False
 
         state = {
-            "blocks": [{"x": b.x, "y": b.y, "color": b.color, "v_x": b.v_x, "isColliding": b.is_colliding} for b in blocks],
+            "blocks": [{"x": b.x, "x2": b.x2, "y": b.y, "y2": b.y2, "color": b.color, "v_x": b.v_x, "isColliding": b.is_colliding} for b in blocks],
             "collisionOccured": collision_occured,
             "totalCollisions": total_collisions   
             } 
@@ -144,10 +154,5 @@ async def physics(websocket): # type: ignore
         await asyncio.sleep(Constants.dt - (time.time() - start_time))
 
 async def main():
-    async with websockets.serve(physics, "localhost", 8765): 
+    async with websockets.serve(simulate, "localhost", 8765): 
         await asyncio.Future()  
-
-print("Running")
-asyncio.run(main())
-
-print("Program finished")
