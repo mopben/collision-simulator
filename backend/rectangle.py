@@ -53,37 +53,18 @@ class Rectangle():
         if t_enter <= t_exit and 0 <= t_enter <= dt:
             return t_enter
         return None
-    
-    def calculate_wall_collision_time(self, dt) -> float | None:
-        x1_min, x1_max = self.x, self.x + self.size
-        y1_min, y1_max = self.y, self.y + self.size
-        
-        def axis_times(smaller, greater, v_rel):
-            if v_rel == 0: # Moving the same speed
-                return float("inf") 
-            
-            return (greater - smaller) / v_rel
-        
-        if 0 <= axis_times(Constants.CANVAS_X, x1_min, self.v_x) <= dt:
-            return axis_times(Constants.CANVAS_X, x1_min, self.v_x)
-        if 0 <= axis_times(x1_max, Constants.CANVAS_X + Constants.CANVAS_WIDTH, self.v_x) <= dt:
-            return axis_times(x1_max, Constants.CANVAS_X + Constants.CANVAS_WIDTH, self.v_x)
-        if 0 <= axis_times(Constants.CANVAS_Y, y1_min, self.v_y) <= dt: 
-            return axis_times(Constants.CANVAS_Y, y1_min, self.v_y)
-        if 0 <= axis_times(y1_max, Constants.CANVAS_Y + Constants.CANVAS_HEIGHT, self.v_y) <= dt:  
-            return axis_times(y1_max, Constants.CANVAS_Y + Constants.CANVAS_HEIGHT, self.v_y)
-        return None
-    
-    def collide_with_block(self, other):
-        self.v_x = (self.v_x * (self.m - other.m) + 2 * other.m * other.v_x) / (self.m + other.m)
-        self.v_y = (self.v_y * (self.m - other.m) + 2 * other.m * other.v_y) / (self.m + other.m)
-        other.v_x = (other.v_x * (other.m - self.m) + 2 * self.m * self.v_x) / (self.m + other.m)
-        other.v_y = (other.v_y * (other.m - self.m) + 2 * self.m * self.v_y) / (self.m + other.m)      
-        print(self.v_x)
 
-    def collide_with_wall(self):
-        self.v_x = -self.v_x
-        self.v_y = -self.v_y
+    def collide_with_block(self, other):
+        if self.m or other.m == float('inf'): # collision including a wall
+            other.v_x = - other.v_x
+            other.v_y = - other.v_y
+        else:        
+            self.v_x = (self.v_x * (self.m - other.m) + 2 * other.m * other.v_x) / (self.m + other.m)
+            self.v_y = (self.v_y * (self.m - other.m) + 2 * other.m * other.v_y) / (self.m + other.m)
+            other.v_x = (other.v_x * (other.m - self.m) + 2 * self.m * self.v_x) / (self.m + other.m)
+            other.v_y = (other.v_y * (other.m - self.m) + 2 * self.m * self.v_y) / (self.m + other.m)      
+            print(self.v_x)
+
 
     def __str__(self):
         return f"Block(mass={self.m}, position=({self.x}, {self.y}), force=({self.f_x}, {self.f_y}))"

@@ -119,16 +119,13 @@ async def simulate_collisions(blocks: List[Rectangle], dt: float):
                     
 async def simulate(websocket): # type: ignore
     blocks = [Rectangle(300, 300, 350, 350, 5000, "blue"), Rectangle(400, 300, 450, 350, 5, "red"), 
-              Rectangle(0, 0, 600, 10, 10, "black"), # top
-             Rectangle(0, 600, 600, 590, float('inf'), "black"), # bottom
-             Rectangle(0, 0, 10, 600, float('inf'), "black"), # left    
-             Rectangle(600, 0, 590, 600, float('inf'), "black")] # right
+              Rectangle(0, 0, 600, 10, 2 ** 64 - 1, "black"), # top
+             Rectangle(0, 600, 600, 590, 2 ** 64 - 1, "black"), # bottom
+             Rectangle(0, 0, 10, 600, 2 ** 64 - 1, "black"), # left    
+             Rectangle(600, 0, 590, 600, 2 ** 64 - 1, "black")] # right
 
     blocks[0].apply_force(500000, 0)
     blocks[1].apply_force(500, 0)
-
-    
-
 
     total_collisions = 0
     while True: # Each loop is one frame
