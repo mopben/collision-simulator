@@ -14,4 +14,3 @@ def initialize_canvas():
 
 asyncio.run(physics_sim.main())
 print("Running")
-    

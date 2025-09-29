@@ -37,6 +37,7 @@ async def simulate_collisions(blocks: List[Rectangle], dt: float):
     Returns (collision_counts, any_collision_happened_bool).
     This advances blocks in-place through the entire dt.
     """
+
     remaining = dt
     total_collisions = 0
     any_collision = False
@@ -46,8 +47,7 @@ async def simulate_collisions(blocks: List[Rectangle], dt: float):
         iters += 1
 
         # Find earliest collision in (0, remaining]
-        earliest_t = None
-        collisions_to_resolve = []  # list of tuples describing collisions
+        collisions_to_resolve : List[tuple[int, int, int]] = []  # list of tuples describing collisions
         heapq.heapify(collisions_to_resolve) # (priorty, item) = (time, (type, i, j))
 
         # block-block collisions
@@ -56,60 +56,45 @@ async def simulate_collisions(blocks: List[Rectangle], dt: float):
             for j in range(i + 1, n):
                 t = blocks[i].calculate_collision_time(blocks[j], remaining)
                 if t is not None and t >= 0.0 - EPS:
-                    if earliest_t is None or t < earliest_t - EPS:
-                        earliest_t = t
-                        collisions_to_resolve = [("bb", i, j, t)]
-                    elif abs(t - earliest_t) <= EPS:
-                        collisions_to_resolve.append(("bb", i, j, t))
+                    heapq.heappush(collisions_to_resolve, (t, i, j))
 
-        # block-wall collisions
-        for i in range(n):
-            t = blocks[i].calculate_wall_collision_time(remaining)
-            if t is not None and t >= 0.0 - EPS:
-                if earliest_t is None or t < earliest_t - EPS:
-                    earliest_t = t
-                    collisions_to_resolve = [("bw", i, -1, t)]
-                elif abs(t - earliest_t) <= EPS:
-                    collisions_to_resolve.append(("bw", i, -1, t))
 
-        if earliest_t is None:
-            # no collision in remaining time — advance all and finish
+        if len(collisions_to_resolve) == 0:
+            # No collisions in remaining time
             for b in blocks:
                 b.step(remaining)
             remaining = 0.0
             break
 
         # Advance all objects by earliest_t
-        if earliest_t > 0.0:
+        if collisions_to_resolve[0][0] > 0.0: # collisions_to_resolve[0][0] is the earliest collision time
+            print("Collisions to resolve:", collisions_to_resolve)
             for b in blocks:
-                b.step(earliest_t)
-            remaining -= earliest_t
+                b.step(collisions_to_resolve[0][0])
+            remaining -= collisions_to_resolve[0][0]
+        
+        for i in range(2):
+            print(blocks[i].color, blocks[i])
 
-        # Resolve all collisions that occur at earliest_t (use copies of indices to avoid duplication)
-        resolved_pairs = set()
-        for kind, i, j, t in collisions_to_resolve:
-            if kind == "bb":
-                key = (min(i, j), max(i, j))
-                if key in resolved_pairs:
-                    continue
-                # Resolve using elastic formula — ensure you use velocities at collision moment
-                blocks[i].collide_with_block(blocks[j])  # note: blocks already moved to collision point
-                resolved_pairs.add(key)
-                total_collisions += 1
-                any_collision = True
-            else:  # "bw" block-wall
-                if i in resolved_pairs:
-                    continue
-                blocks[i].collide_with_wall()  # already at collision point
-                resolved_pairs.add(i)
-                total_collisions += 1
-                any_collision = True
+        last_t = collisions_to_resolve[0][0]
+        for collisions in collisions_to_resolve: 
+            t, i, j, = collisions
+            if t != last_t:
+                break
+            blocks[i].collide_with_block(blocks[j])
+            total_collisions += 1
+            any_collision = True
+            last_t = t
+        print("After: ")
+        for i in range(2):
+            print(blocks[i].color, blocks[i])
 
-        # After resolving collisions at this instant, continue to next iteration to handle remaining time
-        # Note: collisions resolution changed velocities; we will recompute times relative to new velocities
-        # small safeguard: if too many iterations, break
-    if iters >= MAX_ITER:
-        # fallback: advance remaining time to avoid locking
+        print()
+            
+
+
+
+    if iters >= MAX_ITER: # To prevent an infinite loop
         for b in blocks:
             b.step(remaining)
         remaining = 0.0
@@ -119,17 +104,16 @@ async def simulate_collisions(blocks: List[Rectangle], dt: float):
                     
 async def simulate(websocket): # type: ignore
     blocks = [Rectangle(300, 300, 350, 350, 5000, "blue"), Rectangle(400, 300, 450, 350, 5, "red"), 
-              Rectangle(0, 0, 600, 10, 2 ** 64 - 1, "black"), # top
-             Rectangle(0, 600, 600, 590, 2 ** 64 - 1, "black"), # bottom
-             Rectangle(0, 0, 10, 600, 2 ** 64 - 1, "black"), # left    
-             Rectangle(600, 0, 590, 600, 2 ** 64 - 1, "black")] # right
+              Rectangle(0, 0, 600, 10, float('inf'), "black"), # top
+             Rectangle(0, 600, 600, 590, float('inf'), "black"), # bottom
+             Rectangle(0, 0, 10, 600, float('inf'), "black"), # left    
+             Rectangle(600, 0, 590, 600, float('inf'), "black")] # right
 
     blocks[0].apply_force(500000, 0)
     blocks[1].apply_force(500, 0)
 
     total_collisions = 0
     while True: # Each loop is one frame
-        '''
         collisions = 0
         collision_occured = False
         start_time = time.time()
@@ -137,10 +121,8 @@ async def simulate(websocket): # type: ignore
         total_collisions += collisions
         # for i, b in enumerate(blocks):
         #     b.step(Constants.dt - collision_times[i]) 
-        '''
 
         collision_occured = False
-
         state = {
             "blocks": [{"x": b.x, "x2": b.x2, "y": b.y, "y2": b.y2, "color": b.color, "v_x": b.v_x, "isColliding": b.is_colliding} for b in blocks],
             "collisionOccured": collision_occured,

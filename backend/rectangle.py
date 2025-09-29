@@ -23,6 +23,8 @@ class Rectangle():
     def step(self, dt):
         self.x += self.v_x * dt
         self.y += self.v_y * dt
+        self.x2 += self.v_x * dt
+        self.y2 += self.v_y * dt
 
     def calculate_collision_time(self, other, dt: float) -> float | None:
         # Relative motion
@@ -55,9 +57,9 @@ class Rectangle():
         return None
 
     def collide_with_block(self, other):
-        if self.m or other.m == float('inf'): # collision including a wall
-            other.v_x = - other.v_x
-            other.v_y = - other.v_y
+        if other.m == float('inf'): # collision including a wall
+            self.v_x = - self.v_x
+            self.v_y = - self.v_y
         else:        
             self.v_x = (self.v_x * (self.m - other.m) + 2 * other.m * other.v_x) / (self.m + other.m)
             self.v_y = (self.v_y * (self.m - other.m) + 2 * other.m * other.v_y) / (self.m + other.m)
@@ -67,4 +69,7 @@ class Rectangle():
 
 
     def __str__(self):
-        return f"Block(mass={self.m}, position=({self.x}, {self.y}), force=({self.f_x}, {self.f_y}))"
+        return f"Block(mass={self.m}, position=({self.x}, {self.y}), velocity=({self.v_x}, {self.v_y}))"
+    
+    def __repr__(self):
+        return self.__str__()
