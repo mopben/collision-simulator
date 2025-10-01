@@ -61,11 +61,14 @@ class Rectangle():
             self.v_x = - self.v_x
             self.v_y = - self.v_y
         else:        
-            self.v_x = (self.v_x * (self.m - other.m) + 2 * other.m * other.v_x) / (self.m + other.m)
-            self.v_y = (self.v_y * (self.m - other.m) + 2 * other.m * other.v_y) / (self.m + other.m)
-            other.v_x = (other.v_x * (other.m - self.m) + 2 * self.m * self.v_x) / (self.m + other.m)
-            other.v_y = (other.v_y * (other.m - self.m) + 2 * self.m * self.v_y) / (self.m + other.m)      
-            print(self.v_x)
+            u1x, u2x = self.v_x, other.v_x # temp versions 
+            u1y, u2y = self.v_y, other.v_y
+
+            self.v_x = (u1x * (self.m - other.m) + 2 * other.m * u2x) / (self.m + other.m)
+            other.v_x = (u2x * (other.m - self.m) + 2 * self.m * u1x) / (self.m + other.m)
+
+            self.v_y = (u1y * (self.m - other.m) + 2 * other.m * u2y) / (self.m + other.m)
+            other.v_y = (u2y * (other.m - self.m) + 2 * self.m * u1y) / (self.m + other.m)
 
 
     def __str__(self):
